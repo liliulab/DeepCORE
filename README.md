@@ -43,16 +43,16 @@ python -u DeepCORE_train.py --input_file='/path_to_tab_seperated_input_file' --a
 
 The above command runs with the default settings for training. Additional settings that can be included along with the above code are:
 * **Input settings**
- * ***--epigenetic_index*** = Choose between 1, 2, 3, 4, 5, and all representing chipeseq 1-5 or all markers. Users can also choose multiple indices seperated by comma. (default = 'all')
- * **--normalize** = A boolean setting to indicate if data nomralization is needed. (default = False)
- * **--flanking_region** = The default flanking region is $\pm$ 5000bps around TSS. If the user wants to reduce the flanking region, use this setting. Users can choose between 'upstream** 'downstream** 'both** and 'none'. (default = 'none'. This indicates to use all 10000bps region)
- * **--flanking_width** = Use this parameter only if you choose the --flanking_region to be upsteram, downsteram, or both. This setting will indicate the width of flanking around TSS (default='10000')
- * **--task** = This parameter indicates whether the prediction task is regression or classification. (default = 'regression')
- * **--num_classes** = This parameter indicates the number of output labels for a classification task. (default = 1 which corresponds to regression)
- * **--split_percent** = Users can indicate the percent of the samples to be used for training. (default = 0.8 representing 8-% for training and 20% for validation)
- * **--balanced_train** = Boolean parameter for training set to be balanced before training. (default = False)
- * **--chromosome_name** = This is used to select chromosomes that should be included for analysis, comma delimited. (default = 'All')
- * **--bin_cutoff** = This parameter indicates the probability cutoff to decide the class labels. Must be between 0 and 1.. (default = 0.5)
+     * **--epigenetic_index** = Choose between 1, 2, 3, 4, 5, and all representing chipeseq 1-5 or all markers. Users can also choose multiple indices seperated by comma. (default = 'all')
+     * **--normalize** = A boolean setting to indicate if data nomralization is needed. (default = False)
+     * **--flanking_region** = The default flanking region is $\pm$ 5000bps around TSS. If the user wants to reduce the flanking region, use this setting. Users can choose between 'upstream** 'downstream** 'both** and 'none'. (default = 'none'. This indicates to use all 10000bps region)
+     * **--flanking_width** = Use this parameter only if you choose the --flanking_region to be upsteram, downsteram, or both. This setting will indicate the width of flanking around TSS (default='10000')
+     * **--task** = This parameter indicates whether the prediction task is regression or classification. (default = 'regression')
+     * **--num_classes** = This parameter indicates the number of output labels for a classification task. (default = 1 which corresponds to regression)
+     * **--split_percent** = Users can indicate the percent of the samples to be used for training. (default = 0.8 representing 8-% for training and 20% for validation)
+     * **--balanced_train** = Boolean parameter for training set to be balanced before training. (default = False)
+     * **--chromosome_name** = This is used to select chromosomes that should be included for analysis, comma delimited. (default = 'All')
+     * **--bin_cutoff** = This parameter indicates the probability cutoff to decide the class labels. Must be between 0 and 1.. (default = 0.5)
  
 - CNN parameters
 * **--cnn_num_layers** = Number of CNN layers. (default = 1)
