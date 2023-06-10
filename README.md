@@ -20,14 +20,14 @@ The DNN architecture consists of two separate paths representing the genetic vie
 git clone https://github.com/liliulab/DeepCORE
 cd DeepCORE
 ```
-`&pm;`
+```&pm;```
 
 ## Usage
 ### input File
 To train the DeepCORE model, users are required to provide a tab sepearated file with the following mandatory columns:
 - gene_id: Ensembl gene id 
 - chromosome_name: Chromosome location of the gene
-- sequence: DNA sequence flanking `$\pm$5000` (user desiered length) of the transcription start site (TSS) of the gene
+- sequence: DNA sequence flanking ```$\pm$5000``` (user desiered length) of the transcription start site (TSS) of the gene
 - TPM: Gene expresion measured in terms of TPM (Transcripts Per Million)
 - chipseq 1-5: Position-specific normalized read counts for 5 histone modification marks (H3K4me1, H3K4me3, H3K9me3, H3K27me3, and H3K27ac, in that particular order). Each column should contain a comma-seperated string with 10000 values (user defined length and should match the length of the DNA sequence).
 
