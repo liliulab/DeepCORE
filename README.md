@@ -20,7 +20,7 @@ The DNN architecture consists of two separate paths representing the genetic vie
 git clone https://github.com/liliulab/DeepCORE
 cd DeepCORE
 ```
-```&pm;```
+$\pm$
 
 ## Usage
 ### input File
