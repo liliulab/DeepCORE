@@ -43,6 +43,7 @@ python -u DeepCORE_train.py --input_file='/path_to_tab_seperated_input_file' --a
 
 The above command runs with the default settings for training. Additional settings that can be included along with the above code are:
 * **Input settings**
+
     **--epigenetic_index** = Choose between 1, 2, 3, 4, 5, and all representing chipeseq 1-5 or all markers. Users can also choose multiple indices seperated by comma. (default = 'all')
     **--normalize** = A boolean setting to indicate if data nomralization is needed. (default = False)
     **--flanking_region** = The default flanking region is $\pm$ 5000bps around TSS. If the user wants to reduce the flanking region, use this setting. Users can choose between 'upstream** 'downstream** 'both** and 'none'. (default = 'none'. This indicates to use all 10000bps region)
