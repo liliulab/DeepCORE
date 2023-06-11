@@ -1,8 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-@author: pbchandr
+@author: Pramod Bharadwaj Chandrashekar, Li Liu
+@email: pchandrashe3@wisc.edu, liliu@asu.edu
 """
+
 import sys
 import tensorflow as tf
 from tensorflow.contrib import rnn
