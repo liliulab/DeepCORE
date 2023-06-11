@@ -137,13 +137,9 @@ for ix, row in g_info.iterrows():
     gene_id = row['gene_id']
     gene = gene_info[gene_info['gene_id'] == gene_id]
     gene = gene.iloc[0]
-
     gene_attn, attn_bins, attn_pvals = dru.match_attn_loc(gene, attn[ix].copy())
-
     attn_bins_str = '|'.join(map(str, attn_bins))
-
     ginfo = gene_info.loc[gene_info.gene_id == gene_id, :].squeeze()
-
     genes_attn = genes_attn.append({'gene_id': gene_id, 'chromosome_name': row['chromosome_name'],
                                     'transcript_start': row['transcript_start'],
                                     'transcript_end': row['transcript_end'],
@@ -152,8 +148,8 @@ for ix, row in g_info.iterrows():
                                     'downstream_start': ginfo['downstream_start'],
                                     'downstream_end': ginfo['downstream_end'],
                                     'attention_bins': attn_bins_str}, ignore_index=True)
-
 gene_attn.to_csv('test_prioritized_attention_bins.csv', index=False)
+
 '''
 
 The above code generates a file containg attention bins for genes in the test set. You can also use "DeepCORE_get_attention.py" file to generate the results. Users should modify lines 13, 14, and 15 to point ot the model folder, predicted info file generated during training (e.g., test_pred_info), and input data file respectively.
