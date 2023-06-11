@@ -151,7 +151,10 @@ for ix, row in g_info.iterrows():
 gene_attn.to_csv('test_prioritized_attention_bins.csv', index=False)
 ```
 
-The above code generates a file containg attention bins for genes in the test set. You can also use "DeepCORE_get_attention.py" file to generate the results. Users should modify lines 13, 14, and 15 to point ot the model folder, predicted info file generated during training (e.g., test_pred_info), and input data file respectively.
+The above code generates a file containg attention bins for genes in the test set. You can also use "DeepCORE_get_attention.py" file to generate the results. Users should modify lines 13, 14, and 15 to point ot the model folder, predicted info file generated during training (e.g., test_pred_info), and input data file respectively. This output file looks like the image below.
+
+![Sample Attention Output](https://github.com/liliulab/DeepCORE/assets/18314073/4a11d062-9d78-4c5e-804f-3dd1529e7c9f)
+
 
 ## MIT License
 
