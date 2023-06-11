@@ -1,8 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-@author: pbchandr
+@author: Pramod Bharadwaj Chandrashekar, Li Liu
+@email: pchandrashe3@wisc.edu, liliu@asu.edu
 """
+
 import copy
 import sys
 import os
@@ -67,14 +69,14 @@ def saturated_mutageneis(seq, nucleotides=['A', 'C', 'T', 'G']):
         j = j + 1
     return data
 
-def perform_one_hot_encoding(data):
+def perform_one_hot_encoding(data, total_length):
     """
     Function to perform one hot encoding of the sequence which is the input to the system
         - Sequences are converted into 4*10000 dim vector
         - 4 dimensions:- Order of dimension is A-1, G-2, C-3, T-4
         - The value in each cell is either 0 or 1 representing corresponding nucleotide.
     """
-    info = np.zeros(shape=(len(data), 4, 10000))
+    info = np.zeros(shape=(len(data), 4, total_length))
     for i, _ in enumerate(data):
         indices = [j for j, a in enumerate(data[i]) if a == 'A']
         info[i, 0, indices] = 1
@@ -195,7 +197,7 @@ def discretize_labels(data, cutoff):
 
 
 def process_data(data_file, chromosome="All", num_classes=2,
-                 categorize='percentile', is_ordinal=False):
+                 categorize='percentile', is_ordinal=False, genomic_length=10000):
     """ This method reads and fetches the input data """
     print "Process data entered: %s, %d, %s"%(data_file, num_classes, categorize)
 
@@ -297,7 +299,7 @@ def split_data(data, labels, save_location=None, split_percent=0.8, need_balance
 
     return tr_info, trr, val_info, valr, te_info, ter
 
-def get_feature_data(data, add_sequence, add_epigenetics, flanking_region, flanking_length):
+def get_feature_data(data, add_sequence, add_epigenetics, total_length, flanking_region, flanking_length):
     """ Function to fetch the features which is given as input to the model """
     # Check if atleast one type of data is selected: sequence and epigenetics
     if (not add_sequence) and (not add_epigenetics):
@@ -307,11 +309,11 @@ def get_feature_data(data, add_sequence, add_epigenetics, flanking_region, flank
 
     if add_sequence:
         data.sequence = data.sequence.str.slice(0, len(data['sequence'].values[0])-1)
-        seq_info = perform_one_hot_encoding(data["sequence"].values)
+        seq_info = perform_one_hot_encoding(data["sequence"].values, total_length)
         #print "seq_info", seq_info.shape
 
     if add_epigenetics:
-        epigen_data = get_epigenetic_data(data)
+        epigen_data = get_epigenetic_data(data, total_length)
         #print "epi_info", epigen_data.shape
 
     if add_sequence and add_epigenetics:
@@ -322,7 +324,7 @@ def get_feature_data(data, add_sequence, add_epigenetics, flanking_region, flank
         gex_gepi_data = epigen_data
 
     #print("gex_gepi_data", gex_gepi_data.shape)
-    lower_limit, upper_limit = 0, 10000
+    lower_limit, upper_limit = 0, total_length
     if flanking_region == 'upstream':
         lower_limit = gex_gepi_data.shape[2]/2-flanking_length
         upper_limit = gex_gepi_data.shape[2]/2
@@ -337,24 +339,18 @@ def get_feature_data(data, add_sequence, add_epigenetics, flanking_region, flank
     gex_gepi_data = gex_gepi_data[:, :, lower_limit:upper_limit]
     return gex_gepi_data
 
-def get_epigenetic_data(data):
+def get_epigenetic_data(data, total_length):
     """ Function to extract histone modification data """
     epigen_cols = [col for col in data.columns if 'chipseq' in col]
-    epigen_data = np.zeros([len(data), len(epigen_cols), 10000])
+    epigen_data = np.zeros([len(data), len(epigen_cols), total_length])
     for indx, col in enumerate(epigen_cols):
         epigen_info = data[col].values
         for i in range(0, len(data)):
             temp = np.reshape(np.fromstring(epigen_info[i], dtype=int, sep=","), [1, -1])
-            if temp.shape[1] > 10000:
-                epigen_data[i, indx, :] = temp[0, 0:10000]
+            if temp.shape[1] > total_length:
+                epigen_data[i, indx, :] = temp[0, 0:total_length]
             else:
                 epigen_data[i, indx, 0:temp.shape[1]] = temp
-#            epi_split = epigen_info[i].split(',')
-#            temp = np.reshape(np.asarray(epi_split), [1, -1])
-#            if len(epi_split) > 10000:
-#                epigen_data[i, indx, 0:10000] = temp[0, (len(epi_split)-10000):len(epi_split)+1]
-#            else:
-#                epigen_data[i, indx, 0:len(epi_split)] = temp
     return epigen_data
 
 def filter_data(data, labels, gene_loc, task):
