@@ -1,8 +1,8 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-@author: Pramod Bharadwaj Chandrashekar
-@email: pchandrashe3@wisc.edu
+@author: Pramod Bharadwaj Chandrashekar, Li Liu
+@email: pchandrashe3@wisc.edu, liliu@asu.edu
 """
 
 import argparse
@@ -66,7 +66,8 @@ def train_step(sess, model, data, labels, args):
         # Run backprop and cost during training
         features = ddu.get_feature_data(data[ptr:ptr+args.batch_size].copy(),
                                         args.add_sequence_info, args.add_epigenetic_info,
-                                        args.flanking_region, args.flanking_width)
+                                        args.genomic_length, args.flanking_region,
+                                        args.flanking_width)
         features = features/max_intensity
         features = features.transpose(0, 2, 1)
         #print('features before ',features.shape)
@@ -106,7 +107,8 @@ def predict(sess, model, eval_data, eval_labels, max_intensity, args, verbose='t
     for ptr in range(0, len(eval_data), args.batch_size):
         features = ddu.get_feature_data(eval_data[ptr:ptr+args.batch_size].copy(),
                                         args.add_sequence_info, args.add_epigenetic_info,
-                                        args.flanking_region, args.flanking_width)
+                                        args.genomic_length, args.flanking_region,
+                                        args.flanking_width)
         features = features/max_intensity
         features = features.transpose(0, 2, 1)
 
@@ -194,19 +196,14 @@ def train_regression(args):
     print("Sample length - Train : %d, Valid : %d, Test : %d"%(len(tr_info), len(val_info),
                                                                len(val_info)))
 
-    with open('genes_84.txt', 'r') as gene_loc_file:
-        keep_genes = gene_loc_file.readlines()
-    keep_genes = [s.replace('\n', '') for s in keep_genes]
-
-    te_84_info = gene_info[gene_info['gene_id'].isin(keep_genes)]
-    ter_84 = labels[te_84_info.index, :]
-    te_84_info = te_84_info.reset_index(drop=True)
-
     del gene_info, labels
     tot_time = round((time.time() - st_time)/60, 2)
     print "Step 1: Load and preprocess data complete in %.2f min\n"%(tot_time)
 
     # Step 2: choose the model and create an object of the model
+    if args.flanking_width > args.genomic_length:
+        args.flanking_width = args.genomic_length
+
     st_time = time.time()
     args.input_width, args.seq_len, seq_h = args.flanking_width, 4, 0
     if "5hm" in args.gex_gepi_data_file:
@@ -225,7 +222,7 @@ def train_regression(args):
     args.input_height = seq_h
     args.num_classes = 1
 
-    model = CRAN(args)
+    model = CnnBilstm(args)
     tot_time = round((time.time() - st_time)/60, 2)
     print "Step 2: Model object create completed in %.2f min\n"%(tot_time)
 
@@ -266,13 +263,9 @@ def train_regression(args):
                 te_pred, te_pred_info = predict(sess, model, te_info, ter, max_int, args, 'test')
                 te_mse, _, _ = evaluate_regression(ter, te_pred, cutoff, verbose='Testing')
 
-                te_84_pred, te_84_pred_info = predict(sess, model, te_84_info, ter_84, max_int,
-                                                      args, 'test_84')
-                
                 ddu.dump_data(tr_pred_info, args.save + 'train_pred_info.pkl')
                 ddu.dump_data(val_pred_info, args.save + 'val_pred_info.pkl')
                 ddu.dump_data(te_pred_info, args.save + 'test_pred_info.pkl')
-                ddu.dump_data(te_84_pred_info, args.save + 'test_84_pred_info.pkl')
 
                 np.savetxt(args.save+'train_truth.out', trr, delimiter="\t")
                 np.savetxt(args.save+'train_pred.out', tr_pred, delimiter="\t")
@@ -291,9 +284,9 @@ def train_regression(args):
 
             if epoch > 15 and count_eval > 4:
                 break
-    print "Optimization Finished!"
+
     tot_end_time = round((time.time() - tot_st_time)/60, 2)
-    print "Step 2: Model object create completed in %.2f min\n"%(tot_end_time)
+    print "Optimization completed in %.2f min\n"%(tot_end_time)
 
 
 def main():
@@ -301,11 +294,11 @@ def main():
     parser = argparse.ArgumentParser()
 
     # Input data file
-    parser.add_argument('--gex_gepi_data_file', type=str, default='data/lung_chr_all.csv',
+    parser.add_argument('--gex_gepi_data_file', type=str, default='demo_5hm.csv',
                         help='Gene Expression with epigenetic data input file location')
-    parser.add_argument('--add_epigenetic_info', type=bool, default=False,
+    parser.add_argument('--add_epigenetic_info', type=bool, default=True,
                         help='Epigenetic details to be included or not')
-    parser.add_argument('--add_sequence_info', type=bool, default=False,
+    parser.add_argument('--add_sequence_info', type=bool, default=True,
                         help='Should the data be flattened')
     parser.add_argument('--non_zero', type=bool, default=False,
                         help='If true, 0.5 is added to the input data')
@@ -313,18 +306,20 @@ def main():
                         help='Choose between 1, 2, 3, 4, 5, all. Also choose multiple.')
     parser.add_argument('--normalize', type=bool, default=False,
                         help='Use this option to normalize inputs')
+    parser.add_argument('--genomic_length', type=int, default=300,
+                        help='Specify the total genomic region length used for analysis')
 
     parser.add_argument('--flanking_region', type=str, default='none',
                         help='Choose between upstream, downstream, both, none')
     parser.add_argument('--flanking_width', type=int, default=10000,
                         help='Choose the width of flanking around TSS')
 
-    parser.add_argument('--num_classes', type=int, default=2, help='Number of output classes')
+    parser.add_argument('--num_classes', type=int, default=1, help='Number of output classes')
     parser.add_argument('--task', type=str, default='regression', help='Choose task type')
-    parser.add_argument('--grouping_method', type=str, default='histogram',
+    parser.add_argument('--grouping_method', type=str, default='percentile',
                         help='Choose from rank(binary), percentile/histogram(multi-class)')
 
-    parser.add_argument('--split_percent', type=float, default=0.8,
+    parser.add_argument('--split_percent', type=float, default=0.67,
                         help='Choose how the tain and test split to occur.')
     parser.add_argument('--balanced_train', type=bool, default=False,
                         help='Specify this parameter if all the training set is to be balanced.')
@@ -335,28 +330,28 @@ def main():
 
     # Hyperparameters
     # 1 - CNN
-    parser.add_argument('--cnn_num_layers', type=str, default='5',
+    parser.add_argument('--cnn_num_layers', type=str, default='1',
                         help='Number of CNN layers')
-    parser.add_argument('--cnn_filter_sizes', type=str, default='5',
+    parser.add_argument('--cnn_filter_sizes', type=str, default='50',
                         help='filter sizes, comma delimited. Must be equal to the no of layers')
-    parser.add_argument('--cnn_num_filters', type=str, default='128',
+    parser.add_argument('--cnn_num_filters', type=str, default='50',
                         help='No of filters, comma delimited. i.e. dim for wts in each filters.')
     parser.add_argument('--cnn_stride_length', type=str, default='1',
                         help='Filter strides, comma delimited. i.e steps for sliding window.')
-    parser.add_argument('--cnn_pool_sizes', type=str, default='500', help='Pooling size')
+    parser.add_argument('--cnn_pool_sizes', type=str, default='50', help='Pooling size')
 
     # 2 - RNN Encoder
-    parser.add_argument('--add_encoder', type=bool, default=False,
+    parser.add_argument('--add_encoder', type=bool, default=True,
                         help='Flag to add encoder layer')
-    parser.add_argument('--encoder_model_type', type=str, default='None',
+    parser.add_argument('--encoder_model_type', type=str, default='BILSTM',
                         help='Choose between None, BIRNN, BIURNN, BIGRU, BILSTM, BILSTMP')
     parser.add_argument('--encoder_num_layers', type=int, default=1,
                         help='Number of rnn layers.')
-    parser.add_argument('--encoder_hid_dims', type=str, default='32',
+    parser.add_argument('--encoder_hid_dims', type=str, default='15',
                         help='Number of hidden dimensions for encoder rnn layer, comma delimited.')
 
     # 3 - Attention Unit
-    parser.add_argument('--attn_hid_dims', type=str, default='32',
+    parser.add_argument('--attn_hid_dims', type=str, default='20',
                         help='Number of hidden dimensions for attention fc layer, comma delimited.')
     parser.add_argument('--attn_wt_randomize', type=bool, default=False,
                         help='Flag to set the init attn weights to random')
@@ -364,7 +359,7 @@ def main():
                         help='Flag to include last state of encoder to attention computation')
     parser.add_argument('--attn_score_activator', type=str, default='tanh',
                         help='Choose between relu and tanh')
-    parser.add_argument('--attn_estimator', type=str, default='softmax',
+    parser.add_argument('--attn_estimator', type=str, default='sparsemax',
                         help='Choose btwn softmax, softmax+temp, gumbell softmax, sparsemax')
     parser.add_argument('--attn_temp', type=float, default=1.0,
                         help='Choose the sharpening temperature')
@@ -381,7 +376,7 @@ def main():
     # 4 - Decoder Unit
     parser.add_argument('--decoder_multi_view', type=bool, default=False,
                         help='Flag to set the RNN for seq and epi separate or together')
-    parser.add_argument('--decoder_model_type', type=str, default='None',
+    parser.add_argument('--decoder_model_type', type=str, default='fcn',
                         help='Choose between None, BILSTM, BIURNN, BIGRU, BILSTM, BILSTMP, FCN')
     parser.add_argument('--decoder_hid_dims', type=str, default='32',
                         help='Number of hidden dimensions for decoder, comma delimited.')
@@ -404,12 +399,12 @@ def main():
     # Settings
     parser.add_argument('--train_epochs', type=int, default=100, help='Number of training epochs')
     parser.add_argument('--eval_interval', type=int, default=1, help='Evaluate once in _ epochs')
-    parser.add_argument('--batch_size', type=int, default=150, help='Batch size of training')
+    parser.add_argument('--batch_size', type=int, default=10, help='Batch size of training')
     parser.add_argument('--learn_rate', type=float, default=0.001, help='learning rate')
     parser.add_argument('--out_reg_lambda', type=float, default=0.005, help='l2_reg_lambda')
 
     # Model save paths
-    parser.add_argument('--save', type=str, default="model/samp", help="path to save model")
+    parser.add_argument('--save', type=str, default="model/samp/", help="path to save model")
     parser.add_argument('--out_file', type=str, default="results.txt", help="path to save perf")
 
     args = parser.parse_args()
