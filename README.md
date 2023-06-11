@@ -45,7 +45,7 @@ The above command runs with the default settings for training. Additional settin
 * **Input settings**
     * **--epigenetic_index** = Choose between 1, 2, 3, 4, 5, and all representing chipeseq 1-5 or all markers. Users can also choose multiple indices seperated by comma. (default = 'all')
     * **--normalize** = A boolean setting to indicate if data nomralization is needed. (default = False)
-    * **--flanking_region** = The default flanking region is $\pm$ 5000bps around TSS. If the user wants to reduce the flanking region, use this setting. Users can choose between 'upstream** 'downstream** 'both** and 'none'. (default = 'none'. This indicates to use all 10000bps region)
+    * **--flanking_region** = The default flanking region is $\pm$ 5000bps around TSS. If the user wants to reduce the flanking region, use this setting. Users can choose between 'upstream** 'downstream', 'both', and 'none'. (default = 'none'. This indicates to use all 10000bps region)
     * **--flanking_width** = Use this parameter only if you choose the --flanking_region to be upsteram, downsteram, or both. This setting will indicate the width of flanking around TSS (default='10000')
     * **--task** = This parameter indicates whether the prediction task is regression or classification. (default = 'regression')
     * **--num_classes** = This parameter indicates the number of output labels for a classification task. (default = 1 which corresponds to regression)
